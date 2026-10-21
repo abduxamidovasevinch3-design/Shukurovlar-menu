@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Shukurovlar | Menyu</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --bg: #fdf9f3; --surface: #ffffff; --field: #f3efe9;
+    --text: #3a2a20; --muted: #8a7a6e; --brand: #5c3d2a;
+    --accent: #ffc84a; --line: #ece4da; --basket: #fff1cc; --chip: #f1e4cf;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--text); padding-bottom: 84px;
+  }
+  header { background: var(--brand); color: #fff; text-align: center; padding: 18px 16px 14px; }
+  header h1 { margin: 0; font-size: 20px; }
+  header p { margin: 4px 0 0; font-size: 14px; opacity: .8; }
+
+  .sahifa { display: none; padding: 0 16px; }
+  .sahifa.active { display: block; }
+
+  /* Bosh sahifa hero */
+  .hero {
+    background: linear-gradient(rgba(58,42,32,.55), rgba(58,42,32,.85)), #6b4a33;
+    color: #fff; padding: 26px 18px 22px; margin: 0 -16px;
+  }
+  .hero small { color: var(--accent); letter-spacing: 2px; font-weight: 600; font-size: 12px; }
+  .hero h2 { font-size: 24px; margin: 8px 0 6px; line-height: 1.2; }
+  .hero p { margin: 0 0 16px; opacity: .9; }
+
+  .btn-main {
+    width: 100%; padding: 15px; border: none; border-radius: 18px;
+    background: var(--accent); color: var(--brand); font-size: 16px; font-weight: 700; cursor: pointer;
+  }
+  .btn-main:active { transform: scale(.98); }
+
+  /* Savat (Bugungi kechki ovqat) */
+  .savat {
+    margin: 16px 0; background: var(--basket); border-radius: 20px; padding: 16px;
+  }
+  .savat-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .savat-head h3 { margin: 0; font-size: 18px; }
+  .savat-head span { color: var(--muted); font-size: 14px; }
+  .qator {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 0; border-bottom: 1px solid #ecd9a8;
+  }
+  .qator:last-of-type { border-bottom: none; }
+  .qator .kat { color: var(--muted); font-size: 13px; }
+  .qator .nom { font-weight: 700; font-size: 17px; margin-top: 2px; color: var(--brand); }
+  .x-btn {
+    width: 42px; height: 42px; border: none; border-radius: 12px; background: var(--chip);
+    font-size: 18px; color: var(--brand); cursor: pointer; flex: 0 0 auto;
+  }
+  .bo-sh { color: var(--muted); font-size: 14px; padding: 10px 0; }
+  .savat-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; gap: 10px; }
+  .link-btn { background: none; border: none; color: var(--brand); text-decoration: underline; font-size: 14px; cursor: pointer; padding: 0; }
+  .yubor-btn {
+    background: var(--brand); color: #fff; border: none; border-radius: 14px;
+    padding: 12px 16px; font-weight: 700; font-size: 15px; cursor: pointer;
+  }
+  .yubor-btn:disabled { opacity: .4; }
+
+  /* Menyu */
+  .chips { display: flex; gap: 8px; overflow-x: auto; padding: 14px 0 6px; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip {
+    flex: 0 0 auto; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line);
+    background: var(--surface); font-size: 14px; cursor: pointer; white-space: nowrap;
+  }
+  .chip.active { background: var(--brand); color: #fff; border-color: var(--brand); }
+
+  .sarlavha { display: flex; justify-content: space-between; align-items: baseline; margin: 12px 0 10px; }
+  .sarlavha h3 { margin: 0; font-size: 20px; }
+  .sarlavha span { color: var(--muted); font-size: 14px; }
+
+  input.qidiruv {
+    width: 100%; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px;
+    background: var(--field); font-size: 15px; color: var(--text); outline: none;
+  }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+    padding: 14px 10px 12px; position: relative; text-align: center;
+  }
+  .card .emoji { font-size: 34px; }
+  .card .nom { font-weight: 600; font-size: 14px; margin-top: 6px; }
+  .card .kat { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .card .actions { display: flex; gap: 6px; margin-top: 10px; }
+  .card .actions button { flex: 1; border: none; border-radius: 10px; padding: 7px 0; font-size: 13px; cursor: pointer; background: var(--chip); color: var(--brand); }
+  .card .actions button.added { background: var(--brand); color: #fff; }
+  .card .yurak { position: absolute; top: 6px; right: 8px; background: none; border: none; font-size: 18px; cursor: pointer; }
+
+  .bosh-xabar { text-align: center; color: var(--muted); padding: 30px 0; grid-column: 1 / -1; }
+
+  nav {
+    position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-around;
+    background: rgba(255,255,255,.95); backdrop-filter: blur(10px); border-top: 1px solid var(--line);
+    padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px));
+  }
+  nav button {
+    background: none; border: none; color: var(--muted); font-size: 12px;
+    display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; flex: 1;
+  }
+  nav button .ikon { font-size: 22px; }
+  nav button.active { color: var(--brand); font-weight: 700; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 100px; transform: translateX(-50%);
+    background: var(--text); color: #fff; padding: 10px 16px; border-radius: 12px;
+    font-size: 14px; opacity: 0; transition: opacity .3s; pointer-events: none; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Shukurovlar oilasi 🏡</h1>
+  <p>Oilaviy menyu</p>
+</header>
+
+<!-- BOSH SAHIFA -->
+<section class="sahifa active" id="bosh">
+  <div class="hero">
+    <small>KECHKI OVQAT UCHUN</small>
+    <h2>Bugungi taomni tanlaymizmi?</h2>
+    <p>Birga tanlaymiz, maza qilib yeymiz.</p>
+    <button class="btn-main" onclick="tasodifiyTanla()">🎲 Biz uchun tanla</button>
+  </div>
+  <div id="savat-bosh"></div>
+</section>
+
+<!-- MENYU -->
+<section class="sahifa" id="menyu">
+  <div id="savat-menyu"></div>
+  <div class="chips" id="chips"></div>
+  <div class="sarlavha">
+    <h3>Oilaviy menyu</h3>
+    <span id="soni"></span>
+  </div>
+  <input class="qidiruv" id="qidiruv" placeholder="Taomni qidirish…" oninput="royxatniChiz()">
+  <div class="grid" id="royxat"></div>
+</section>
+
+<!-- SEVIMLILAR -->
+<section class="sahifa" id="sevimli">
+  <div class="sarlavha" style="margin-top:14px;">
+    <h3>Sevimlilar</h3>
+    <span id="sevimli-soni"></span>
+  </div>
+  <div class="grid" id="sevimli-royxat"></div>
+</section>
+
+<nav>
+  <button class="active" data-tab="bosh" onclick="tabGo('bosh')"><span class="ikon">🏠</span>Bosh sahifa</button>
+  <button data-tab="menyu" onclick="tabGo('menyu')"><span class="ikon">🍽</span>Menyu</button>
+  <button data-tab="sevimli" onclick="tabGo('sevimli')"><span class="ikon">♡</span>Sevimlilar</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ===== Taomlar bazasi =====
+  const taomlar = [
+    { nom: "Mastava", kat: "Suyuq ovqat", emoji: "🥣" },
+    { nom: "Vermishel", kat: "Suyuq ovqat", emoji: "🍜" },
+    { nom: "Mosh", kat: "Suyuq ovqat", emoji: "🥣" },
+    { nom: "Qayish (suyuq)", kat: "Suyuq ovqat", emoji: "🍲" },
+    { nom: "Grechka (suyuq)", kat: "Suyuq ovqat", emoji: "🥣" },
+    { nom: "Chechevitsa", kat: "Suyuq ovqat", emoji: "🥣" },
+    { nom: "Garox", kat: "Suyuq ovqat", emoji: "🍲" },
+    { nom: "Tuxumli piyava", kat: "Suyuq ovqat", emoji: "🥚" },
+    { nom: "Kochadan (suyuq)", kat: "Suyuq ovqat", emoji: "🍲" },
+    { nom: "Sho'rva", kat: "Suyuq ovqat", emoji: "🍲" },
+    { nom: "Lag'mon (suyuq)", kat: "Suyuq ovqat", emoji: "🍜" },
+    { nom: "Chuchvara", kat: "Suyuq ovqat", emoji: "🥟" },
+
+    { nom: "Osh", kat: "Quyuq ovqat", emoji: "🍚" },
+    { nom: "Qayish", kat: "Quyuq ovqat", emoji: "🥘" },
+    { nom: "Manti", kat: "Quyuq ovqat", emoji: "🥟" },
+    { nom: "Xonim", kat: "Quyuq ovqat", emoji: "🥟" },
+    { nom: "Grechka", kat: "Quyuq ovqat", emoji: "🥘" },
+    { nom: "Bifshteks", kat: "Quyuq ovqat", emoji: "🥩" },
+    { nom: "Somsa", kat: "Quyuq ovqat", emoji: "🥐" },
+    { nom: "Kavob", kat: "Quyuq ovqat", emoji: "🍢" },
+    { nom: "Kochadan", kat: "Quyuq ovqat", emoji: "🍛" },
+    { nom: "Dimlama", kat: "Quyuq ovqat", emoji: "🥔" },
+    { nom: "Norin", kat: "Quyuq ovqat", emoji: "🍝" },
+    { nom: "Tovuqli kabob", kat: "Quyuq ovqat", emoji: "🍗" },
+
+    { nom: "Ko'k choy", kat: "Ichimlik", emoji: "🍵" },
+    { nom: "Qora choy", kat: "Ichimlik", emoji: "☕" },
+    { nom: "Mevali choy", kat: "Ichimlik", emoji: "🫖" },
+    { nom: "Cola", kat: "Ichimlik", emoji: "🥤" },
+    { nom: "Fanta", kat: "Ichimlik", emoji: "🍊" },
+    { nom: "Buratino", kat: "Ichimlik", emoji: "🥤" },
+    { nom: "Ays tea", kat: "Ichimlik", emoji: "🧊" },
+    { nom: "Ayran", kat: "Ichimlik", emoji: "🥛" },
+    { nom: "Kompot", kat: "Ichimlik", emoji: "🍹" },
+
+    { nom: "Marojni", kat: "Desert", emoji: "🍰" },
+    { nom: "Pirojni", kat: "Desert", emoji: "🥧" },
+    { nom: "Pechenye", kat: "Desert", emoji: "🍪" },
+    { nom: "Trayfl", kat: "Desert", emoji: "🍫" },
+    { nom: "Murabbo", kat: "Desert", emoji: "🍓" },
+    { nom: "Chocotella", kat: "Desert", emoji: "🍫" },
+    { nom: "Yogurt", kat: "Desert", emoji: "🥛" },
+    { nom: "Halva", kat: "Desert", emoji: "🍬" },
+    { nom: "Chak-chak", kat: "Desert", emoji: "🍩" },
+
+    { nom: "Uzum", kat: "Meva", emoji: "🍇" },
+    { nom: "Kivi", kat: "Meva", emoji: "🥝" },
+    { nom: "Banan", kat: "Meva", emoji: "🍌" },
+    { nom: "Mandarin", kat: "Meva", emoji: "🍊" },
+    { nom: "Nok", kat: "Meva", emoji: "🍐" },
+    { nom: "Behi", kat: "Meva", emoji: "🍈" },
+    { nom: "Xurmo", kat: "Meva", emoji: "🟠" },
+    { nom: "Olma", kat: "Meva", emoji: "🍎" },
+    { nom: "Anor", kat: "Meva", emoji: "🔴" },
+
+    { nom: "Kartoshka", kat: "Tez tayyorlanadigan", emoji: "🥔" },
+    { nom: "Menemen", kat: "Tez tayyorlanadigan", emoji: "🍳" },
+    { nom: "Xohishiy", kat: "Tez tayyorlanadigan", emoji: "🍽" },
+    { nom: "Tuxum qovurdoq", kat: "Tez tayyorlanadigan", emoji: "🍳" },
+    { nom: "Tost", kat: "Tez tayyorlanadigan", emoji: "🥪" },
+    { nom: "Bulg'or salati", kat: "Tez tayyorlanadigan", emoji: "🥗" },
+    { nom: "Makaron tuxum bilan", kat: "Tez tayyorlanadigan", emoji: "🍝" }
+  ];
+
+  // Kechki ovqat uchun tasodifiy tanlashda ishlatiladigan kategoriyalar
+  const kechkiKategoriyalar = ["Quyuq ovqat", "Desert", "Meva", "Ichimlik"];
+  const kategoriyalar = ["Barchasi", "Suyuq ovqat", "Quyuq ovqat", "Ichimlik", "Desert", "Meva", "Tez tayyorlanadigan"];
+
+  // ===== Holat =====
+  let tanlangan = "Barchasi";
+  let sevimlilar = yukla("shukurov_sevimli");
+  let savat = yukla("shukurov_savat"); // har kategoriyadan bittadan: [{nom, kat, emoji}]
+
+  function yukla(kalit) {
+    try { return JSON.parse(localStorage.getItem(kalit) || "[]"); }
+    catch (e) { return []; }
+  }
+  function saqla(kalit, qiymat) {
+    try { localStorage.setItem(kalit, JSON.stringify(qiymat)); } catch (e) {}
+  }
+
+  // ===== Tab almashtirish =====
+  function tabGo(id) {
+    document.querySelectorAll(".sahifa").forEach(s => s.classList.toggle("active", s.id === id));
+    document.querySelectorAll("nav button").forEach(b => b.classList.toggle("active", b.dataset.tab === id));
+    if (id === "menyu") { chiplarniChiz(); royxatniChiz(); }
+    if (id === "sevimli") sevimliniChiz();
+    haptic("light");
+  }
+
+  // ===== Savat =====
+  function taomTopish(nom) { return taomlar.find(t => t.nom === nom); }
+
+  function savatgaQoshish(nom) {
+    const t = taomTopish(nom);
+    if (!t) return;
+    // Bir kategoriyadan bittadan: eskisi almashtiriladi
+    savat = savat.filter(s => s.kat !== t.kat);
+    savat.push({ nom: t.nom, kat: t.kat, emoji: t.emoji });
+    saqla("shukurov_savat", savat);
+    haptic("light");
+    savatniChiz();
+    royxatniChiz();
+  }
+
+  function savatdanOlish(nom) {
+    savat = savat.filter(s => s.nom !== nom);
+    saqla("shukurov_savat", savat);
+    haptic("light");
+    savatniChiz();
+    royxatniChiz();
+  }
+
+  function savatniTozalash() {
+    savat = [];
+    saqla("shukurov_savat", savat);
+    savatniChiz();
+    royxatniChiz();
+  }
+
+  function tasodifiyTanla() {
+    // Har bir kechki kategoriyadan tasodifiy bittadan
+    savat = kechkiKategoriyalar.map(kat => {
+      const havuz = taomlar.filter(t => t.kat === kat);
+      const t = havuz[Math.floor(Math.random() * havuz.length)];
+      return { nom: t.nom, kat: t.kat, emoji: t.emoji };
+    });
+    saqla("shukurov_savat", savat);
+    haptic("medium");
+    savatniChiz();
+    royxatniChiz();
+  }
+
+  function savatHtml() {
+    const sarlavha = `
+      <div class="savat-head">
+        <h3>Bugungi kechki ovqat</h3>
+        <span>${savat.length} ta variant</span>
+      </div>`;
+
+    if (!savat.length) {
+      return `<div class="savat">${sarlavha}
+        <div class="bo-sh">Hali taom tanlanmadi. "Biz uchun tanla" yoki kartochkadagi "+ Savatga" tugmasini bosing.</div>
+      </div>`;
+    }
+
+    const qatorlar = savat.map(s => `
+      <div class="qator">
+        <div>
+          <div class="kat">${s.kat}</div>
+          <div class="nom">${s.nom}</div>
+        </div>
+        <button class="x-btn" onclick="savatdanOlish('${s.nom}')" aria-label="O'chirish">✕</button>
+      </div>`).join("");
+
+    return `<div class="savat">
+      ${sarlavha}
+      ${qatorlar}
+      <div class="savat-actions">
+        <button class="link-btn" onclick="savatniTozalash()">Tanlovni tozalash</button>
+        <button class="yubor-btn" onclick="oilagaYuborish()">Oilaga yuborish</button>
+      </div>
+    </div>`;
+  }
+
+  function savatniChiz() {
+    const html = savatHtml();
+    document.getElementById("savat-bosh").innerHTML = html;
+    document.getElementById("savat-menyu").innerHTML = html;
+  }
+
+  async function oilagaYuborish() {
+    if (!savat.length) return;
+    const matn = "🍽 Bugungi kechki ovqat (Shukurovlar oilasi):\n" +
+      savat.map(s => `• ${s.kat}: ${s.nom}`).join("\n");
+    try {
+      if (navigator.share) {
+        await navigator.share({ text: matn });
+        return;
+      }
+    } catch (e) { /* bekor qilindi */ return; }
+    try {
+      await navigator.clipboard.writeText(matn);
+      toast("Ro'yxat nusxalandi. Oilaga yuboring");
+    } catch (e) {
+      toast("Nusxalab bo'lmadi");
+    }
+  }
+
+  // ===== Kategoriya chiplari =====
+  function chiplarniChiz() {
+    document.getElementById("chips").innerHTML = kategoriyalar.map(k =>
+      `<div class="chip ${k === tanlangan ? "active" : ""}" onclick="kategoriyaTanla('${k}')">${k}</div>`
+    ).join("");
+  }
+  function kategoriyaTanla(k) {
+    tanlangan = k;
+    chiplarniChiz();
+    royxatniChiz();
+  }
+
+  // ===== Filtr va qidiruv =====
+  function filtrlangan() {
+    const q = document.getElementById("qidiruv").value.trim().toLowerCase();
+    return taomlar.filter(t =>
+      (tanlangan === "Barchasi" || t.kat === tanlangan) &&
+      t.nom.toLowerCase().includes(q)
+    );
+  }
+
+  function kartaHtml(t) {
+    const yoq = sevimlilar.includes(t.nom);
+    const savatda = savat.some(s => s.nom === t.nom);
+    return `
+      <div class="card">
+        <button class="yurak" onclick="sevimliQilish('${t.nom}')">${yoq ? "❤️" : "♡"}</button>
+        <div class="emoji">${t.emoji}</div>
+        <div class="nom">${t.nom}</div>
+        <div class="kat">${t.kat}</div>
+        <div class="actions">
+          <button class="${savatda ? "added" : ""}" onclick="savatgaQoshish('${t.nom}')">${savatda ? "✓ Savatda" : "+ Savatga"}</button>
+        </div>
+      </div>`;
+  }
+
+  function royxatniChiz() {
+    const natija = filtrlangan();
+    document.getElementById("soni").textContent = natija.length + " ta variant";
+    document.getElementById("royxat").innerHTML = natija.length
+      ? natija.map(kartaHtml).join("")
+      : `<div class="bosh-xabar">Mos taom topilmadi</div>`;
+  }
+
+  // ===== Sevimlilar =====
+  function sevimliQilish(nom) {
+    sevimlilar = sevimlilar.includes(nom)
+      ? sevimlilar.filter(x => x !== nom)
+      : [...sevimlilar, nom];
+    saqla("shukurov_sevimli", sevimlilar);
+    haptic("light");
+    royxatniChiz();
+    sevimliniChiz();
+  }
+
+  function sevimliniChiz() {
+    const royxat = taomlar.filter(t => sevimlilar.includes(t.nom));
+    document.getElementById("sevimli-soni").textContent = royxat.length + " ta";
+    document.getElementById("sevimli-royxat").innerHTML = royxat.length
+      ? royxat.map(kartaHtml).join("")
+      : `<div class="bosh-xabar">Hali sevimli taom yo'q. Menyudan ♡ bosing.</div>`;
+  }
+
+  // ===== Yordamchi =====
+  function haptic(turi) {
+    try { window.Telegram?.WebApp?.HapticFeedback?.impactOccurred(turi); } catch (e) {}
+  }
+  let toastTimer;
+  function toast(matn) {
+    const el = document.getElementById("toast");
+    el.textContent = matn;
+    el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove("show"), 2000);
+  }
+
+  if (window.Telegram?.WebApp) {
+    Telegram.WebApp.ready();
+    Telegram.WebApp.expand();
+  }
+
+  chiplarniChiz();
+  savatniChiz();
+  royxatniChiz();
+  sevimliniChiz();
+</script>
+</body>
+</html>
